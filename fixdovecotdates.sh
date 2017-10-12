@@ -1,5 +1,5 @@
-#!/bin/sh
-# version 1.0
+#!/usr/bin/env bash
+# version 1.0.1
 # fix the file date stamp for Dovecot email if year is 2020.
 
 STARTDIR=$1
@@ -11,21 +11,21 @@ if [ "$STARTDIR" = "" ] || [ "$STARTDIR" = "?" ] || [[ "$STARTDIR" = *-h* ]]; th
 	exit
 fi
 
-cd $1
+cd "$1" || exit
 
 #Here we set BASHs internal IFS variable so directories/filenames are not broken into new lines when a space is found.
 IFS=$'\n'
-cd $STARTDIR
+cd "$STARTDIR" || exit
 FILES="*"
 for F in $FILES
 do
-	WORK=`cat $F`
-	FILESTAMP=`ls -l $F | awk -F" " '{print $(NF-1)}'`
+	WORK=$(cat "$F")
+	FILESTAMP=$(ls -l "$F" | awk -F" " '{print $(NF-1)}')
 
 if [[ "$FILESTAMP" = "2020" ]]; then
-	DAY=`echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f1`
-	DAY=`printf "%02d" $DAY`
-	MON_STR=`echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f2`
+	DAY=$(echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f1)
+	DAY=$(printf "%02d" "$DAY")
+	MON_STR=$(echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f2)
 		if [[ "$MON_STR" = "Jan" ]]; then
 		MONTH="01"
 		elif [[ "$MON_STR" = "Feb" ]]; then
@@ -51,20 +51,18 @@ if [[ "$FILESTAMP" = "2020" ]]; then
 		elif [[ "$MON_STR" = "Dec" ]]; then
   		MONTH="12"
 		fi
-	YEAR=`echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f3`
-	HOUR=`echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f4 | cut -d ":" -f1`
-	MIN=`echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f4 | cut -d ":" -f2`
-	OFFSET=`echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f5`
-	
+	YEAR=$(echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f3)
+	HOUR=$(echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f4 | cut -d ":" -f1)
+	MIN=$(echo "$WORK" | grep -m1 "Date: " | sed 's/^[^-]*, //' | sed 's/Date: //' | cut -d " " -f4 | cut -d ":" -f2)
 	TIMESTAMP="$YEAR""$MONTH""$DAY""$HOUR""$MIN"
 
 	echo "Processing $F file..."
 	echo "$TIMESTAMP"
-	touch -t "$TIMESTAMP" $F
+	touch -t "$TIMESTAMP" "$F"
 elif [[ "$FILESTAMP" != "2020" ]]; then
 	echo "Skipping $F file..."
 fi
-touch $STARTDIR
+touch "$STARTDIR"
 done
 cd ..
 rm dovecot.index.cache
